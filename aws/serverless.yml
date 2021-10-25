@@ -1,0 +1,47 @@
+# serverless.yml
+service: event-summary-service
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: us-west-2
+  stage: ${opt:stage, "development"}
+  lambdaHashingVersion: 20201221
+
+  environment:
+    EVENT_SUMMARY_TABLE: ${self:service}-${self:provider.stage}-eventSummaryTable
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Scan
+            - dynamodb:PutItem
+            - dynamodb:DeleteItem
+            - dynamodb:QueryItem
+          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.EVENT_SUMMARY_TABLE}"
+
+
+functions:
+  setEventSummary:
+    handler: source/main.setEventSummary
+    events:
+      - http:
+          path: setEventSummary/{key}
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    playerTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.EVENT_SUMMARY_TABLE}
+        AttributeDefinitions:
+          - AttributeName: key
+            AttributeType: S
+        KeySchema:
+          - AttributeName: key
+            KeyType: HASH
