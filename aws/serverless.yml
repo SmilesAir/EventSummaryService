@@ -10,6 +10,8 @@ provider:
 
   environment:
     EVENT_SUMMARY_TABLE: ${self:service}-${self:provider.stage}-eventSummaryTable
+    INFO_TABLE: ${self:service}-${self:provider.stage}-infoTable
+    CACHE_BUCKET: ${self:service}-${self:provider.stage}-cache-bucket
 
   iam:
     role:
@@ -21,6 +23,16 @@ provider:
             - dynamodb:DeleteItem
             - dynamodb:QueryItem
           Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.EVENT_SUMMARY_TABLE}"
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.INFO_TABLE}"
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+          Resource: "arn:aws:s3:::${self:provider.environment.CACHE_BUCKET}/*"
 
 
 functions:
@@ -31,10 +43,24 @@ functions:
           path: setEventSummary/{key}
           method: post
           cors: true
+  getEventSummary:
+    handler: source/main.getEventSummary
+    events:
+      - http:
+          path: getEventSummary/{key}
+          method: get
+          cors: true
+  getAllEvents:
+    handler: source/main.getAllEvents
+    events:
+      - http:
+          path: getAllEvents
+          method: get
+          cors: true
 
 resources:
   Resources:
-    playerTable:
+    eventTable:
       Type: AWS::DynamoDB::Table
       Properties:
         BillingMode: PAY_PER_REQUEST
@@ -45,3 +71,19 @@ resources:
         KeySchema:
           - AttributeName: key
             KeyType: HASH
+    infoTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.INFO_TABLE}
+        AttributeDefinitions:
+          - AttributeName: key
+            AttributeType: S
+        KeySchema:
+          - AttributeName: key
+            KeyType: HASH
+    cacheBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        AccessControl: Private
+        BucketName: ${self:provider.environment.CACHE_BUCKET}

@@ -9,6 +9,8 @@ const Mobx = require("mobx")
 
 require("./index.less")
 
+// Google form: https://forms.gle/gw65dM2d1PLK2jqD9
+
 function render() {
     ReactDOM.render(
         <div />,
