@@ -3,7 +3,7 @@ service: event-summary-service
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs16.x
   region: us-west-2
   stage: ${opt:stage, "development"}
   lambdaHashingVersion: 20201221
@@ -22,6 +22,7 @@ provider:
             - dynamodb:PutItem
             - dynamodb:DeleteItem
             - dynamodb:QueryItem
+            - dynamodb:BatchWriteItem
           Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.EVENT_SUMMARY_TABLE}"
         - Effect: Allow
           Action:
@@ -33,7 +34,6 @@ provider:
             - s3:PutObject
             - s3:GetObject
           Resource: "arn:aws:s3:::${self:provider.environment.CACHE_BUCKET}/*"
-
 
 functions:
   setEventSummary:
@@ -56,6 +56,13 @@ functions:
       - http:
           path: getAllEvents
           method: get
+          cors: true
+  importFromAllData:
+    handler: source/main.importFromAllData
+    events:
+      - http:
+          path: importFromAllData
+          method: post
           cors: true
 
 resources:

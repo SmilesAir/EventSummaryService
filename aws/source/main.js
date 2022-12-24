@@ -6,7 +6,7 @@ const s3Client = new S3Client({ region: process.region })
 const Common = require("./common.js")
 
 const infoKey = "info"
-const cachedDataName = "AllEventSummaryData.json"
+const cachedDataName = `AllEventSummaryData-${process.stage}.json`
 
 module.exports.setEventSummary = (e, c, cb) => { Common.handler(e, c, cb, async (event, context) => {
     let key = decodeURIComponent(event.pathParameters.key)
@@ -118,6 +118,37 @@ module.exports.getAllEvents = (e, c, cb) => { Common.handler(e, c, cb, async (ev
     }
 })}
 
+module.exports.importFromAllData = (e, c, cb) => { Common.handler(e, c, cb, async (event, context) => {
+    let request = JSON.parse(event.body) || {}
+    const allData = request.allData
+
+    if (allData === undefined || allData.eventsData === undefined) {
+        throw "Missing eventsData"
+    }
+
+    let putRequests = []
+    for (let eventDataKey in allData.eventsData) {
+        const eventData = allData.eventsData[eventDataKey]
+        let putEvent = Object.assign({
+            key: eventDataKey
+        }, eventData)
+        putRequests.push({
+            PutRequest: {
+                Item: putEvent
+            }
+        })
+    }
+
+    console.log(putRequests)
+
+    await batchPutItems(process.env.EVENT_SUMMARY_TABLE, putRequests)
+
+    return {
+        success: true,
+        importedEventsCount: putRequests.length
+    }
+})}
+
 async function scanEventData() {
     let allEvents = {}
 
@@ -150,4 +181,17 @@ async function setIsEventDataDirty(isDirty) {
     await docClient.put(putInfoParams).promise().catch((error) => {
         throw error
     })
+}
+
+async function batchPutItems(tableName, putRequests) {
+    for (let i = 0; i < putRequests.length; i += 25) {
+        let params = {
+            RequestItems: {
+                [tableName]: putRequests.slice(i, i + 25)
+            }
+        }
+        await docClient.batchWrite(params).promise().catch((error) => {
+            throw error
+        })
+    }
 }
