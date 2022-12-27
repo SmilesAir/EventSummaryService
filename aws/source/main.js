@@ -6,7 +6,7 @@ const s3Client = new S3Client({ region: process.region })
 const Common = require("./common.js")
 
 const infoKey = "info"
-const cachedDataName = `AllEventSummaryData-${process.stage}.json`
+const cachedDataName = "AllEventSummaryData.json"
 
 module.exports.setEventSummary = (e, c, cb) => { Common.handler(e, c, cb, async (event, context) => {
     let key = decodeURIComponent(event.pathParameters.key)

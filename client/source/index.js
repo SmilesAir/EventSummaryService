@@ -10,7 +10,8 @@ const Mobx = require("mobx")
 
 require("./index.less")
 
-// Google form: https://forms.gle/gw65dM2d1PLK2jqD9
+// Google form development: https://forms.gle/gw65dM2d1PLK2jqD9
+// Google form prod: https://forms.gle/JXXsxLmq9WnHEA8XA
 
 const awsPath = __STAGE__ === "DEVELOPMENT" ? " https://xyf6qhiwi1.execute-api.us-west-2.amazonaws.com/development/" : "https://wyach4oti8.execute-api.us-west-2.amazonaws.com/production/"
 
