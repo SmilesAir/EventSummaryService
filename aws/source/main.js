@@ -63,6 +63,7 @@ module.exports.getEventSummary = (e, c, cb) => { Common.handler(e, c, cb, async 
 })}
 
 module.exports.getAllEvents = (e, c, cb) => { Common.handler(e, c, cb, async (event, context) => {
+    console.log("test start")
     let allEventSummaryData
     let isEventDataDirty = true
     let getInfoParams = {
